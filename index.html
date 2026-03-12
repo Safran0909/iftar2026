@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Iftar Meet Registration</title>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<style>
+
+body{
+    margin:0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: linear-gradient(135deg,#000000,#15122a);
+    height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.container{
+    background:white;
+    padding:40px;
+    border-radius:12px;
+    width:350px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.2);
+    text-align:center;
+}
+
+.logo{
+    width:200px;
+    margin-bottom:10px;
+}
+
+.subtitle{
+    color:#777;
+    margin-bottom:20px;
+}
+
+.price{
+    font-weight:bold;
+    margin-bottom:20px;
+}
+
+input{
+    width:100%;
+    padding:12px;
+    margin-bottom:15px;
+    border-radius:6px;
+    border:1px solid #ccc;
+    font-size:14px;
+}
+
+input:focus{
+    outline:none;
+    border-color:#000000;
+}
+
+button{
+    width:300px;
+    padding:14px;
+    background:#000000;
+    color:white;
+    border:none;
+    border-radius:6px;
+    font-size:16px;
+    cursor:pointer;
+    transition:0.2s;
+}
+
+button:hover{
+    background:#333;
+}
+input{
+    width:300px;
+    padding:12px;
+    margin:10px auto;
+    border-radius:6px;
+    border:1px solid #ccc;
+    font-size:14px;
+    display:block;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<img src="yes.png" class="logo">
+
+<div class="subtitle">Reserve your seat for the event</div>
+
+<div class="price">Ticket: ₹350</div>
+
+<input id="name" placeholder="Full Name">
+
+<input id="email" placeholder="Email Address">
+
+<input id="phone" placeholder="Phone Number">
+
+<button onclick="payNow()">Register & Pay</button>
+
+</div>
+
+<script>
+
+async function payNow(){
+
+const name = document.getElementById("name").value;
+const email = document.getElementById("email").value;
+const phone = document.getElementById("phone").value;
+
+if(!name || !email || !phone){
+alert("Please fill all fields");
+return;
+}
+
+const res = await fetch("/create-order",{
+method:"POST"
+});
+
+const order = await res.json();
+
+var options = {
+
+key: "rzp_live_SQRDi41FeZ7Myg",
+amount: order.amount,
+currency: "INR",
+order_id: order.id,
+name: "Iftar Meet Ticket",
+description: "Event Entry Ticket",
+
+handler: async function () {
+
+const response = await fetch("/register",{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body: JSON.stringify({name,email,phone})
+});
+
+const data = await response.json();
+
+localStorage.setItem("name",name);
+localStorage.setItem("email",email);
+localStorage.setItem("phone",phone);
+localStorage.setItem("ticket",data.ticket);
+
+window.location.href="/ticket.html";
+
+}
+
+};
+
+var rzp = new Razorpay(options);
+rzp.open();
+
+}
+
+</script>
+
+</body>
+</html>
