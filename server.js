@@ -40,7 +40,7 @@ port: 587,
 secure: false,
 auth: {
 user: "safrankankol@gmail.com",
-pass: "uhazdzqzsttbzfot"
+pass: "uhaz dzqz sttb zfot"
 }
 });
 
@@ -270,5 +270,6 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT,()=>{
 console.log("Server running on port "+PORT);
 });
+
 
 
