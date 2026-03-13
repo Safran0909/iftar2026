@@ -2,15 +2,24 @@ const express = require("express");
 const Razorpay = require("razorpay");
 const bodyParser = require("body-parser");
 const cors = require("cors");
-const path = require("path");
 const nodemailer = require("nodemailer");
 const QRCode = require("qrcode");
+const { Pool } = require("pg");
 
 const app = express();
 
 app.use(bodyParser.json());
 app.use(cors());
 app.use(express.static(__dirname));
+
+/* -------------------------
+   PostgreSQL Connection
+------------------------- */
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL || "postgresql://iftaruser:eS2WSyny9V9uM53uURVywjnKXbd9K1Nc@dpg-d6psquaa214c73ec0b00-a.oregon-postgres.render.com/d6iftar",
+  ssl: { rejectUnauthorized: false }
+});
 
 /* -------------------------
    Razorpay Setup
@@ -34,46 +43,25 @@ const transporter = nodemailer.createTransport({
 });
 
 /* -------------------------
-   Attendee Storage
+   Create Payment Order
 ------------------------- */
 
-let attendees = [];
-let ticketCounter = 1;
+app.post("/create-order", async (req,res)=>{
 
-/* -------------------------
-   Generate Ticket Code
-------------------------- */
+  try{
 
-function generateTicket() {
-
-  const ticket = "D6" + String(ticketCounter).padStart(4, "0");
-  ticketCounter++;
-
-  return ticket;
-
-}
-
-/* -------------------------
-   Create Razorpay Order
-------------------------- */
-
-app.post("/create-order", async (req, res) => {
-
-  const options = {
-    amount: 100, // ₹50 example
-    currency: "INR",
-    receipt: "receipt_" + Date.now()
-  };
-
-  try {
-
-    const order = await razorpay.orders.create(options);
+    const order = await razorpay.orders.create({
+      amount: 100, // ₹1
+      currency: "INR",
+      receipt: "receipt_" + Date.now()
+    });
 
     res.json(order);
 
-  } catch (err) {
+  }catch(err){
 
-    res.status(500).send(err);
+    console.log(err);
+    res.status(500).send("Order creation failed");
 
   }
 
@@ -82,98 +70,128 @@ app.post("/create-order", async (req, res) => {
 /* -------------------------
    Register Attendee
 ------------------------- */
-    app.post("/register", async (req, res) => {
 
-  const { name, email, phone } = req.body;
+app.post("/register", async (req,res)=>{
 
-  const ticket = generateTicket();
+const { name,email,phone } = req.body;
 
-  const person = {
-    name,
-    email,
-    phone,
-    ticket,
-    checkedIn: false
-  };
+try{
 
-  attendees.push(person);
+const result = await pool.query(
+"INSERT INTO attendees (name,email,phone) VALUES ($1,$2,$3) RETURNING id",
+[name,email,phone]
+);
 
-  try {
+const id = result.rows[0].id;
 
-    const qrImage = await QRCode.toDataURL(ticket);
-    const base64Data = qrImage.replace(/^data:image\/png;base64,/, "");
+const ticket = "D6" + String(id).padStart(4,"0");
 
-    const mailOptions = {
-      from: "yourgmail@gmail.com",
-      to: email,
-      subject: "Your Iftar Meet Ticket",
-      html: `
-        <h2>Iftar Meet Ticket</h2>
-        <p><b>Name:</b> ${name}</p>
-        <p><b>Email:</b> ${email}</p>
-        <p><b>Phone:</b> ${phone}</p>
-        <p><b>Ticket Code:</b> ${ticket}</p>
-        <p>Show this QR code at entry:</p>
-        <img src="cid:qrcode"/>
-      `,
-      attachments: [
-        {
-          filename: "qrcode.png",
-          content: base64Data,
-          encoding: "base64",
-          cid: "qrcode"
-        }
-      ]
-    };
+await pool.query(
+"UPDATE attendees SET ticket_code=$1 WHERE id=$2",
+[ticket,id]
+);
 
-    await transporter.sendMail(mailOptions);
+/* QR CODE */
 
-  } catch (err) {
-    console.log(err);
-  }
+const qrImage = await QRCode.toDataURL(ticket);
+const base64Data = qrImage.replace(/^data:image\/png;base64,/, "");
 
-  res.json({ ticket });
+/* EMAIL */
+
+await transporter.sendMail({
+
+from:"YOUR_EMAIL@gmail.com",
+to:email,
+subject:"Your Iftar Meet Ticket",
+
+html:`
+<h2>Iftar Meet Ticket</h2>
+
+<p><b>Name:</b> ${name}</p>
+<p><b>Email:</b> ${email}</p>
+<p><b>Phone:</b> ${phone}</p>
+
+<p><b>Ticket Code:</b> ${ticket}</p>
+
+<p>Show this QR code at entry:</p>
+
+<img src="cid:qrcode"/>
+`,
+
+attachments:[
+{
+filename:"qrcode.png",
+content:base64Data,
+encoding:"base64",
+cid:"qrcode"
+}
+]
+
+});
+
+res.json({ticket});
+
+}catch(err){
+
+console.log(err);
+res.status(500).send("Registration failed");
+
+}
 
 });
 
 /* -------------------------
-   QR Check-in Endpoint
+   QR Check-in
 ------------------------- */
 
-app.post("/checkin", (req, res) => {
+app.post("/checkin", async (req,res)=>{
 
-  const ticket = req.body.ticket;
+const { ticket } = req.body;
 
-  const person = attendees.find(a => a.ticket === ticket);
+try{
 
-  if (person) {
+const result = await pool.query(
+"SELECT * FROM attendees WHERE ticket_code=$1",
+[ticket]
+);
 
-    if (person.checkedIn) {
+if(result.rows.length===0){
+return res.send("Invalid Ticket");
+}
 
-      res.send("Already Checked In");
+const person = result.rows[0];
 
-    } else {
+if(person.checked_in){
+return res.send("Already Checked In");
+}
 
-      person.checkedIn = true;
-      res.send("Welcome " + person.name);
+await pool.query(
+"UPDATE attendees SET checked_in=true WHERE ticket_code=$1",
+[ticket]
+);
 
-    }
+res.send("Welcome " + person.name);
 
-  } else {
+}catch(err){
 
-    res.send("Invalid Ticket");
+console.log(err);
+res.status(500).send("Scanner error");
 
-  }
+}
 
 });
 
 /* -------------------------
-   Admin View
+   Admin list
 ------------------------- */
 
-app.get("/attendees", (req, res) => {
+app.get("/attendees", async (req,res)=>{
 
-  res.json(attendees);
+const result = await pool.query(
+"SELECT * FROM attendees ORDER BY id DESC"
+);
+
+res.json(result.rows);
 
 });
 
@@ -181,9 +199,6 @@ app.get("/attendees", (req, res) => {
    Start Server
 ------------------------- */
 
-app.listen(5000, () => {
-
-  console.log("Server running on http://localhost:5000");
-
-
+app.listen(5000,()=>{
+console.log("Server running on http://localhost:5000");
 });
