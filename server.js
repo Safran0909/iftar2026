@@ -17,8 +17,8 @@ app.use(express.static(__dirname));
 ------------------------- */
 
 const razorpay = new Razorpay({
-  key_id: "rzp_live_SQRDi41FeZ7Myg",
-  key_secret: "zTWm9iM4CozUw6VAkC8WC3yn"
+  key_id: "rzp_live_SQduemo1jFIx6m",
+  key_secret: "vKIIZlJLqn8oQxtel02OorlC"
 });
 
 /* -------------------------
@@ -184,5 +184,6 @@ app.get("/attendees", (req, res) => {
 app.listen(5000, () => {
 
   console.log("Server running on http://localhost:5000");
+
 
 });
