@@ -93,9 +93,7 @@ background:#333;
 <div class="price">Ticket: ₹350</div>
 
 <input id="name" placeholder="Full Name" required>
-
 <input id="email" type="email" placeholder="Email Address" required>
-
 <input id="phone" type="tel" placeholder="Phone Number (10 digits)" required>
 
 <button onclick="payNow()">Register & Pay</button>
@@ -110,9 +108,7 @@ const name = document.getElementById("name").value.trim();
 const email = document.getElementById("email").value.trim();
 const phone = document.getElementById("phone").value.trim();
 
-/* -------------------------
-   Validation
-------------------------- */
+/* Validation */
 
 if(!name){
 alert("Please enter your name");
@@ -133,24 +129,16 @@ alert("Phone number must be 10 digits");
 return;
 }
 
-/* -------------------------
-   Create order
-------------------------- */
+/* Create order */
 
-const res = await fetch("/create-order",{
-method:"POST"
-});
-
+const res = await fetch("/create-order",{ method:"POST" });
 const order = await res.json();
 
-/* -------------------------
-   Razorpay
-------------------------- */
+/* Razorpay */
 
 var options = {
 
 key:"rzp_live_SQduemo1jFIx6m",
-
 amount:order.amount,
 currency:"INR",
 order_id:order.id,
@@ -161,6 +149,8 @@ description:"Event Entry Ticket",
 handler: async function () {
 
 try{
+
+/* Register attendee */
 
 const response = await fetch("/register",{
 method:"POST",
@@ -180,11 +170,10 @@ throw new Error("Registration failed");
 
 const data = await response.json();
 
-/* -------------------------
-   Send Email using EmailJS
-------------------------- */
+/* Send email */
 
-emailjs.send(
+try{
+await emailjs.send(
 "service_5lzf9xi",
 "template_aw6i209",
 {
@@ -194,19 +183,18 @@ phone:phone,
 ticket:data.ticket
 }
 );
+}catch(e){
+console.log("Email send failed:", e);
+}
 
-/* -------------------------
-   Save ticket data
-------------------------- */
+/* Save ticket locally */
 
 localStorage.setItem("name",name);
 localStorage.setItem("email",email);
 localStorage.setItem("phone",phone);
 localStorage.setItem("ticket",data.ticket);
 
-/* -------------------------
-   Redirect to ticket page
-------------------------- */
+/* Redirect */
 
 window.location.href="ticket.html";
 
