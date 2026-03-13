@@ -1,6 +1,5 @@
 const express = require("express");
 const Razorpay = require("razorpay");
-const bodyParser = require("body-parser");
 const cors = require("cors");
 const nodemailer = require("nodemailer");
 const QRCode = require("qrcode");
@@ -8,7 +7,7 @@ const { Pool } = require("pg");
 
 const app = express();
 
-app.use(bodyParser.json());
+app.use(express.json());
 app.use(cors());
 app.use(express.static(__dirname));
 
@@ -17,7 +16,9 @@ app.use(express.static(__dirname));
 ------------------------- */
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || "postgresql://iftaruser:eS2WSyny9V9uM53uURVywjnKXbd9K1Nc@dpg-d6psquaa214c73ec0b00-a.oregon-postgres.render.com/d6iftar",
+  connectionString:
+    process.env.DATABASE_URL ||
+    "postgresql://iftaruser:eS2WSyny9V9uM53uURVywjnKXbd9K1Nc@dpg-d6psquaa214c73ec0b00-a.oregon-postgres.render.com/d6iftar",
   ssl: { rejectUnauthorized: false }
 });
 
@@ -26,8 +27,8 @@ const pool = new Pool({
 ------------------------- */
 
 const razorpay = new Razorpay({
-  key_id: "rzp_live_SQduemo1jFIx6m",
-  key_secret: "vKIIZlJLqn8oQxtel02OorlC"
+  key_id: process.env.RAZORPAY_KEY_ID || "rzp_live_SQduemo1jFIx6m",
+  key_secret: process.env.RAZORPAY_SECRET || "vKIIZlJLqn8oQxtel02OorlC"
 });
 
 /* -------------------------
@@ -37,8 +38,8 @@ const razorpay = new Razorpay({
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "safrankankol@gmail.com",
-    pass: "uhaz dzqz sttb zfot"
+    user: process.env.EMAIL_USER || "safrankankol@gmail.com",
+    pass: process.env.EMAIL_PASS || "uhaz dzqz sttb zfot"
   }
 });
 
@@ -46,9 +47,9 @@ const transporter = nodemailer.createTransport({
    Create Payment Order
 ------------------------- */
 
-app.post("/create-order", async (req,res)=>{
+app.post("/create-order", async (req, res) => {
 
-  try{
+  try {
 
     const order = await razorpay.orders.create({
       amount: 100, // ₹1
@@ -58,7 +59,7 @@ app.post("/create-order", async (req,res)=>{
 
     res.json(order);
 
-  }catch(err){
+  } catch (err) {
 
     console.log(err);
     res.status(500).send("Order creation failed");
@@ -71,72 +72,85 @@ app.post("/create-order", async (req,res)=>{
    Register Attendee
 ------------------------- */
 
-app.post("/register", async (req,res)=>{
+app.post("/register", async (req, res) => {
 
-const { name,email,phone } = req.body;
+  const { name, email, phone } = req.body;
 
-try{
+  /* Validation */
 
-const result = await pool.query(
-"INSERT INTO attendees (name,email,phone) VALUES ($1,$2,$3) RETURNING id",
-[name,email,phone]
-);
+  if (!name || !email || !phone)
+    return res.status(400).send("Missing fields");
 
-const id = result.rows[0].id;
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+    return res.status(400).send("Invalid email");
 
-const ticket = "D6" + String(id).padStart(4,"0");
+  if (!/^[0-9]{10}$/.test(phone))
+    return res.status(400).send("Invalid phone");
 
-await pool.query(
-"UPDATE attendees SET ticket_code=$1 WHERE id=$2",
-[ticket,id]
-);
+  try {
 
-/* QR CODE */
+    /* Save attendee */
 
-const qrImage = await QRCode.toDataURL(ticket);
-const base64Data = qrImage.replace(/^data:image\/png;base64,/, "");
+    const result = await pool.query(
+      "INSERT INTO attendees (name,email,phone) VALUES ($1,$2,$3) RETURNING id",
+      [name, email, phone]
+    );
 
-/* EMAIL */
+    const id = result.rows[0].id;
 
-await transporter.sendMail({
+    const ticket = "D6" + String(id).padStart(4, "0");
 
-from:"YOUR_EMAIL@gmail.com",
-to:email,
-subject:"Your Iftar Meet Ticket",
+    await pool.query(
+      "UPDATE attendees SET ticket_code=$1 WHERE id=$2",
+      [ticket, id]
+    );
 
-html:`
-<h2>Iftar Meet Ticket</h2>
+    /* Generate QR */
 
-<p><b>Name:</b> ${name}</p>
-<p><b>Email:</b> ${email}</p>
-<p><b>Phone:</b> ${phone}</p>
+    const qrImage = await QRCode.toDataURL(ticket);
+    const base64Data = qrImage.replace(/^data:image\/png;base64,/, "");
 
-<p><b>Ticket Code:</b> ${ticket}</p>
+    /* Send email */
 
-<p>Show this QR code at entry:</p>
+    await transporter.sendMail({
 
-<img src="cid:qrcode"/>
-`,
+      from: process.env.EMAIL_USER || "safrankankol@email.com",
+      to: email,
+      subject: "Your Iftar Meet Ticket",
 
-attachments:[
-{
-filename:"qrcode.png",
-content:base64Data,
-encoding:"base64",
-cid:"qrcode"
-}
-]
+      html: `
+      <h2>Iftar Meet Ticket</h2>
 
-});
+      <p><b>Name:</b> ${name}</p>
+      <p><b>Email:</b> ${email}</p>
+      <p><b>Phone:</b> ${phone}</p>
 
-res.json({ticket});
+      <p><b>Ticket Code:</b> ${ticket}</p>
 
-}catch(err){
+      <p>Show this QR code at entry:</p>
 
-console.log(err);
-res.status(500).send("Registration failed");
+      <img src="cid:qrcode"/>
+      `,
 
-}
+      attachments: [
+        {
+          filename: "qrcode.png",
+          content: base64Data,
+          encoding: "base64",
+          cid: "qrcode"
+        }
+      ]
+
+    });
+
+    res.json({ ticket });
+
+  } catch (err) {
+
+    console.log(err);
+    res.status(500).send("Registration failed");
+
+  }
 
 });
 
@@ -144,54 +158,95 @@ res.status(500).send("Registration failed");
    QR Check-in
 ------------------------- */
 
-app.post("/checkin", async (req,res)=>{
+app.post("/checkin", async (req, res) => {
 
-const { ticket } = req.body;
+  const { ticket } = req.body;
 
-try{
+  try {
 
-const result = await pool.query(
-"SELECT * FROM attendees WHERE ticket_code=$1",
-[ticket]
-);
+    const result = await pool.query(
+      "SELECT * FROM attendees WHERE ticket_code=$1",
+      [ticket]
+    );
 
-if(result.rows.length===0){
-return res.send("Invalid Ticket");
-}
+    if (result.rows.length === 0)
+      return res.send("Invalid Ticket");
 
-const person = result.rows[0];
+    const person = result.rows[0];
 
-if(person.checked_in){
-return res.send("Already Checked In");
-}
+    if (person.checked_in)
+      return res.send("Already Checked In");
 
-await pool.query(
-"UPDATE attendees SET checked_in=true WHERE ticket_code=$1",
-[ticket]
-);
+    await pool.query(
+      "UPDATE attendees SET checked_in=true WHERE ticket_code=$1",
+      [ticket]
+    );
 
-res.send("Welcome " + person.name);
+    res.send("Welcome " + person.name);
 
-}catch(err){
+  } catch (err) {
 
-console.log(err);
-res.status(500).send("Scanner error");
+    console.log(err);
+    res.status(500).send("Scanner error");
 
-}
+  }
 
 });
 
 /* -------------------------
-   Admin list
+   Dashboard Stats
 ------------------------- */
 
-app.get("/attendees", async (req,res)=>{
+app.get("/stats", async (req, res) => {
 
-const result = await pool.query(
-"SELECT * FROM attendees ORDER BY id DESC"
-);
+  try {
 
-res.json(result.rows);
+    const total = await pool.query(
+      "SELECT COUNT(*) FROM attendees"
+    );
+
+    const checked = await pool.query(
+      "SELECT COUNT(*) FROM attendees WHERE checked_in=true"
+    );
+
+    const totalCount = parseInt(total.rows[0].count);
+    const checkedCount = parseInt(checked.rows[0].count);
+
+    res.json({
+      total: totalCount,
+      checked: checkedCount,
+      remaining: totalCount - checkedCount
+    });
+
+  } catch (err) {
+
+    console.log(err);
+    res.status(500).send("Stats error");
+
+  }
+
+});
+
+/* -------------------------
+   Admin Attendee List
+------------------------- */
+
+app.get("/attendees", async (req, res) => {
+
+  try {
+
+    const result = await pool.query(
+      "SELECT * FROM attendees ORDER BY id DESC"
+    );
+
+    res.json(result.rows);
+
+  } catch (err) {
+
+    console.log(err);
+    res.status(500).send("Error loading attendees");
+
+  }
 
 });
 
@@ -199,6 +254,10 @@ res.json(result.rows);
    Start Server
 ------------------------- */
 
-app.listen(5000,()=>{
-console.log("Server running on http://localhost:5000");
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+
+  console.log("Server running on port " + PORT);
+
 });
