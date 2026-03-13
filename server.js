@@ -4,6 +4,8 @@ const cors = require("cors");
 const nodemailer = require("nodemailer");
 const QRCode = require("qrcode");
 const { Pool } = require("pg");
+const dns = require("dns");
+dns.setDefaultResultOrder("ipv4first");
 
 const app = express();
 
@@ -268,4 +270,5 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT,()=>{
 console.log("Server running on port "+PORT);
 });
+
 
