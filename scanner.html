@@ -1,32 +1,72 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Iftar Meet Ticket Scanner</title>
+<title>Iftar Meet Scanner</title>
 
 <script src="https://unpkg.com/html5-qrcode"></script>
 
 <style>
 
 body{
-font-family: Arial, sans-serif;
-background:#000;
+margin:0;
+font-family:Arial;
+background:linear-gradient(135deg,#000,#15122a);
 color:white;
 text-align:center;
-padding-top:30px;
 }
 
-h2{
+.header{
+padding:20px;
+font-size:26px;
+font-weight:bold;
+}
+
+.container{
+max-width:420px;
+margin:auto;
+background:#111;
+padding:25px;
+border-radius:14px;
+box-shadow:0 10px 25px rgba(0,0,0,0.5);
+}
+
+/* Dashboard */
+
+.stats{
+display:flex;
+justify-content:space-between;
 margin-bottom:20px;
 }
 
-#reader{
-width:320px;
-margin:auto;
+.box{
+background:#1a1a1a;
+padding:12px;
+border-radius:8px;
+width:30%;
 }
+
+.num{
+font-size:22px;
+font-weight:bold;
+}
+
+.label{
+font-size:12px;
+color:#bbb;
+}
+
+/* Scanner */
+
+#reader{
+width:100%;
+margin-top:10px;
+}
+
+/* Result */
 
 #result{
 margin-top:20px;
-font-size:22px;
+font-size:20px;
 font-weight:bold;
 padding:15px;
 border-radius:8px;
@@ -47,12 +87,18 @@ color:black;
 }
 
 button{
-margin-top:20px;
+margin-top:15px;
 padding:12px 20px;
 font-size:16px;
 border:none;
 border-radius:6px;
 cursor:pointer;
+background:#fff;
+color:#000;
+}
+
+button:hover{
+background:#ddd;
 }
 
 </style>
@@ -61,7 +107,34 @@ cursor:pointer;
 
 <body>
 
-<h2>Iftar Meet Scanner</h2>
+<div class="header">
+Iftar Meet Scanner
+</div>
+
+<div class="container">
+
+<!-- Dashboard -->
+
+<div class="stats">
+
+<div class="box">
+<div class="num" id="total">0</div>
+<div class="label">Total</div>
+</div>
+
+<div class="box">
+<div class="num" id="checked">0</div>
+<div class="label">Checked</div>
+</div>
+
+<div class="box">
+<div class="num" id="remaining">0</div>
+<div class="label">Remaining</div>
+</div>
+
+</div>
+
+<!-- Scanner -->
 
 <div id="reader"></div>
 
@@ -71,9 +144,36 @@ cursor:pointer;
 Scan Next Ticket
 </button>
 
+</div>
+
 <script>
 
 let scanner;
+
+/* -------------------------
+   Load Dashboard Stats
+------------------------- */
+
+function loadStats(){
+
+fetch("/stats")
+.then(res=>res.json())
+.then(data=>{
+
+document.getElementById("total").innerText=data.total;
+document.getElementById("checked").innerText=data.checked;
+document.getElementById("remaining").innerText=data.remaining;
+
+});
+
+}
+
+loadStats();
+setInterval(loadStats,5000);
+
+/* -------------------------
+   QR Scan Success
+------------------------- */
 
 function onScanSuccess(decodedText){
 
@@ -89,22 +189,27 @@ body:JSON.stringify({ticket:decodedText})
 .then(res=>res.text())
 .then(data=>{
 
-const resultBox = document.getElementById("result");
+const resultBox=document.getElementById("result");
+
 resultBox.style.display="block";
+
+/* GREEN */
 
 if(data.includes("Welcome")){
 
 resultBox.className="valid";
 resultBox.innerText=data;
 
-}
-else if(data.includes("Already")){
+/* RED */
+
+}else if(data.includes("Already")){
 
 resultBox.className="used";
 resultBox.innerText=data;
 
-}
-else{
+/* YELLOW */
+
+}else{
 
 resultBox.className="invalid";
 resultBox.innerText=data;
@@ -113,20 +218,30 @@ resultBox.innerText=data;
 
 document.getElementById("scanAgain").style.display="inline-block";
 
+loadStats();
+
 });
 
 }
 
+/* -------------------------
+   Start Scanner
+------------------------- */
+
 function startScanner(){
 
-scanner = new Html5QrcodeScanner(
+scanner=new Html5QrcodeScanner(
 "reader",
-{fps:10, qrbox:250}
+{fps:10,qrbox:250}
 );
 
 scanner.render(onScanSuccess);
 
 }
+
+/* -------------------------
+   Restart Scanner
+------------------------- */
 
 function restartScanner(){
 
