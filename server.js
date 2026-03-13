@@ -5,6 +5,7 @@ const nodemailer = require("nodemailer");
 const QRCode = require("qrcode");
 const { Pool } = require("pg");
 const dns = require("dns");
+
 dns.setDefaultResultOrder("ipv4first");
 
 const app = express();
@@ -36,33 +37,49 @@ key_secret:"vKIIZlJLqn8oQxtel02OorlC"
 ------------------------- */
 
 const transporter = nodemailer.createTransport({
-host: "smtp.gmail.com",
-port: 587,
-secure: false,
-auth: {
-user: "safrankankol@gmail.com",
-pass: "uhazdzqzsttbzfot"   // FIXED (no spaces)
+host:"smtp.gmail.com",
+port:465,
+secure:true,
+auth:{
+user:"safrankankol@gmail.com",
+pass:"uhaz dzqz sttb zfot"
 }
 });
 
-transporter.verify(function(error, success) {
-if (error) {
-console.log("Email server error:", error);
-} else {
+transporter.verify(function(error){
+if(error){
+console.log("Email server error:",error);
+}else{
 console.log("Email server ready");
 }
 });
 
 /* -------------------------
+   Random Ticket Generator
+------------------------- */
+
+function generateTicket(){
+
+const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+let code="";
+
+for(let i=0;i<6;i++){
+code+=chars[Math.floor(Math.random()*chars.length)];
+}
+
+return "D6-"+code;
+}
+
+/* -------------------------
    Create Payment Order
 ------------------------- */
 
-app.post("/create-order", async (req,res) => {
+app.post("/create-order",async(req,res)=>{
 
-try {
+try{
 
-const order = await razorpay.orders.create({
-amount:100,
+const order=await razorpay.orders.create({
+amount:35000,
 currency:"INR",
 receipt:"receipt_"+Date.now()
 });
@@ -82,7 +99,7 @@ res.status(500).send("Order creation failed");
    Test Email
 ------------------------- */
 
-app.get("/test-email", async (req,res)=>{
+app.get("/test-email",async(req,res)=>{
 
 try{
 
@@ -108,39 +125,36 @@ res.send("Email failed");
    Register Attendee
 ------------------------- */
 
-app.post("/register", async (req,res)=>{
+app.post("/register",async(req,res)=>{
 
-const {name,email,phone} = req.body;
+const {name,email,phone}=req.body;
 
 if(!name || !email || !phone)
 return res.status(400).send("Missing fields");
 
 try{
 
-const result = await pool.query(
-"INSERT INTO attendees (name,email,phone) VALUES ($1,$2,$3) RETURNING id",
-[name,email,phone]
-);
+/* generate random ticket */
 
-const id = result.rows[0].id;
+const ticket=generateTicket();
 
-const ticket = "D6"+String(id).padStart(4,"0");
+/* insert into DB */
 
 await pool.query(
-"UPDATE attendees SET ticket_code=$1 WHERE id=$2",
-[ticket,id]
+"INSERT INTO attendees (name,email,phone,ticket_code) VALUES ($1,$2,$3,$4)",
+[name,email,phone,ticket]
 );
 
-/* QR Code */
+/* create QR */
 
-const qrImage = await QRCode.toDataURL(ticket);
-const base64Data = qrImage.replace(/^data:image\/png;base64,/,"");
+const qrImage=await QRCode.toDataURL(ticket);
+const base64Data=qrImage.replace(/^data:image\/png;base64,/,"");
 
-/* Send ticket to frontend immediately */
+/* send ticket to frontend */
 
 res.json({ticket});
 
-/* Send email in background */
+/* send email */
 
 transporter.sendMail({
 
@@ -188,13 +202,13 @@ res.status(500).send("Registration failed");
    QR Check-in
 ------------------------- */
 
-app.post("/checkin", async (req,res)=>{
+app.post("/checkin",async(req,res)=>{
 
 const {ticket}=req.body;
 
 try{
 
-const result = await pool.query(
+const result=await pool.query(
 "SELECT * FROM attendees WHERE ticket_code=$1",
 [ticket]
 );
@@ -227,25 +241,25 @@ res.status(500).send("Scanner error");
    Live Dashboard Stats
 ------------------------- */
 
-app.get("/stats", async (req,res)=>{
+app.get("/stats",async(req,res)=>{
 
 try{
 
-const total = await pool.query(
+const total=await pool.query(
 "SELECT COUNT(*) FROM attendees"
 );
 
-const checked = await pool.query(
+const checked=await pool.query(
 "SELECT COUNT(*) FROM attendees WHERE checked_in=true"
 );
 
-const totalCount = parseInt(total.rows[0].count);
-const checkedCount = parseInt(checked.rows[0].count);
+const totalCount=parseInt(total.rows[0].count);
+const checkedCount=parseInt(checked.rows[0].count);
 
 res.json({
-total: totalCount,
-checked: checkedCount,
-remaining: totalCount - checkedCount
+total:totalCount,
+checked:checkedCount,
+remaining:totalCount-checkedCount
 });
 
 }catch(err){
@@ -261,9 +275,9 @@ res.status(500).send("Stats error");
    Admin Attendee List
 ------------------------- */
 
-app.get("/attendees", async (req,res)=>{
+app.get("/attendees",async(req,res)=>{
 
-const result = await pool.query(
+const result=await pool.query(
 "SELECT * FROM attendees ORDER BY id DESC"
 );
 
@@ -275,9 +289,8 @@ res.json(result.rows);
    Start Server
 ------------------------- */
 
-const PORT = process.env.PORT || 5000;
+const PORT=process.env.PORT || 5000;
 
 app.listen(PORT,()=>{
 console.log("Server running on port "+PORT);
 });
-
