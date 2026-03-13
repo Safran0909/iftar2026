@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Manual Ticket Sender</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+
+<script>
+emailjs.init("vYRMUiaEOCkjAGqGj");
+</script>
+
+<style>
+
+html{
+height:100%;
+background:linear-gradient(135deg,#000,#15122a);
+}
+
+body{
+font-family:Arial;
+background:linear-gradient(135deg,#000,#15122a);
+color:white;
+display:flex;
+justify-content:center;
+align-items:center;
+min-height:100vh;
+margin:0;
+padding:20px;
+box-sizing:border-box;
+}
+
+/* container */
+
+.container{
+background:#1b1b1b;
+padding:30px;
+border-radius:12px;
+width:100%;
+max-width:380px;
+text-align:center;
+box-shadow:0 10px 25px rgba(0,0,0,0.4);
+}
+
+/* inputs */
+
+input{
+width:100%;
+padding:14px;
+margin:10px 0;
+border-radius:8px;
+border:none;
+font-size:16px;
+box-sizing:border-box;
+}
+
+/* button */
+
+button{
+width:100%;
+padding:14px;
+background:#28a745;
+border:none;
+color:white;
+font-size:16px;
+border-radius:8px;
+cursor:pointer;
+margin-top:5px;
+}
+
+button:hover{
+background:#1e7e34;
+}
+
+/* ticket text */
+
+.ticket{
+margin-top:20px;
+font-size:20px;
+font-weight:bold;
+word-break:break-word;
+}
+
+/* mobile tweaks */
+
+@media (max-width:480px){
+
+.container{
+padding:25px;
+}
+
+.ticket{
+font-size:18px;
+}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Manual Ticket Sender</h2>
+
+<input id="name" placeholder="Name">
+<input id="email" placeholder="Email">
+<input id="phone" placeholder="Phone">
+
+<button onclick="sendTicket()">Create & Send Ticket</button>
+
+<div class="ticket" id="ticket"></div>
+
+</div>
+
+<script>
+
+async function sendTicket(){
+
+const name=document.getElementById("name").value.trim();
+const email=document.getElementById("email").value.trim();
+const phone=document.getElementById("phone").value.trim();
+
+if(!name || !email || !phone){
+
+alert("Please fill all fields");
+return;
+
+}
+
+try{
+
+const res=await fetch("https://d6iftar2026.onrender.com/register",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+name:name,
+email:email,
+phone:phone
+})
+
+});
+
+if(!res.ok){
+
+throw new Error("Server failed");
+
+}
+
+const data=await res.json();
+
+/* show ticket */
+
+document.getElementById("ticket").innerText="Ticket: "+data.ticket;
+
+/* send email */
+
+await emailjs.send(
+"service_5lzf9xi",
+"template_aw6i209",
+{
+name:name,
+email:email,
+phone:phone,
+ticket:data.ticket
+}
+);
+
+alert("Ticket created and email sent!");
+
+}catch(err){
+
+console.error(err);
+alert("Something went wrong");
+
+}
+
+}
+
+</script>
+
+</body>
+</html>
