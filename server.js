@@ -10,7 +10,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(express.static(__dirname));
-
+app.get("/test-email", async (req,res)=>{
 /* -------------------------
    PostgreSQL
 ------------------------- */
@@ -33,13 +33,13 @@ key_secret:"vKIIZlJLqn8oQxtel02OorlC"
    Email
 ------------------------- */
 
-const transporter = nodemailer.createTransport({
-host:"smtp.gmail.com",
+const transporter = nodemailer.createTransport({host:"smtp.gmail.com",
 port:465,
 secure:true,
+service:"gmail",
 auth:{
 user:"safrankankol@gmail.com",
-pass:"uhazdzqzsttbzfot"
+pass:"uhaz dzqz sttb zfot"
 }
 });
 
@@ -246,5 +246,3 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT,()=>{
 console.log("Server running on port "+PORT);
 });
-
-
