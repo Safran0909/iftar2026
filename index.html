@@ -4,6 +4,7 @@
 <title>Iftar Meet Registration</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#000000">
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
@@ -16,15 +17,26 @@ emailjs.init("vYRMUiaEOCkjAGqGj");
 
 <style>
 
+/* Make the viewport itself use the gradient */
+
+html{
+height:100%;
+background:linear-gradient(135deg,#000000,#15122a);
+overscroll-behavior:none;
+}
+
+/* Page */
+
 body{
 margin:0;
+min-height:100vh;
 font-family:Arial, Helvetica, sans-serif;
 background:linear-gradient(135deg,#000000,#15122a);
-min-height:100vh;
 display:flex;
 justify-content:center;
 align-items:center;
 padding:20px;
+overscroll-behavior:none;
 }
 
 /* container */
@@ -96,7 +108,7 @@ button:hover{
 background:#333;
 }
 
-/* mobile adjustments */
+/* mobile */
 
 @media (max-width:480px){
 
@@ -152,8 +164,6 @@ const name = document.getElementById("name").value.trim();
 const email = document.getElementById("email").value.trim();
 const phone = document.getElementById("phone").value.trim();
 
-/* Validation */
-
 if(!name){
 alert("Please enter your name");
 return;
@@ -173,12 +183,8 @@ alert("Phone number must be 10 digits");
 return;
 }
 
-/* Create order */
-
 const res = await fetch("/create-order",{method:"POST"});
 const order = await res.json();
-
-/* Razorpay */
 
 var options = {
 
@@ -213,8 +219,6 @@ throw new Error("Registration failed");
 
 const data = await response.json();
 
-/* Send Email */
-
 await emailjs.send(
 "service_5lzf9xi",
 "template_aw6i209",
@@ -226,14 +230,10 @@ ticket:data.ticket
 }
 );
 
-/* Save ticket */
-
 localStorage.setItem("name",name);
 localStorage.setItem("email",email);
 localStorage.setItem("phone",phone);
 localStorage.setItem("ticket",data.ticket);
-
-/* Redirect */
 
 window.location.href="ticket.html";
 
