@@ -5,6 +5,13 @@
 
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
+<!-- EmailJS -->
+<script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+
+<script>
+emailjs.init("vYRMUiaEOCkjAGqGj");
+</script>
+
 <style>
 
 body{
@@ -171,16 +178,35 @@ if(!response.ok){
 throw new Error("Registration failed");
 }
 
-const data=await response.json();
+const data = await response.json();
 
-/* Save ticket data */
+/* -------------------------
+   Send Email using EmailJS
+------------------------- */
+
+emailjs.send(
+"service_5lzf9xi",
+"template_aw6i209",
+{
+name:name,
+email:email,
+phone:phone,
+ticket:data.ticket
+}
+);
+
+/* -------------------------
+   Save ticket data
+------------------------- */
 
 localStorage.setItem("name",name);
 localStorage.setItem("email",email);
 localStorage.setItem("phone",phone);
 localStorage.setItem("ticket",data.ticket);
 
-/* Redirect */
+/* -------------------------
+   Redirect to ticket page
+------------------------- */
 
 window.location.href="ticket.html";
 
