@@ -79,7 +79,7 @@ app.post("/create-order",async(req,res)=>{
 try{
 
 const order=await razorpay.orders.create({
-amount:100,
+amount:35000,
 currency:"INR",
 receipt:"receipt_"+Date.now()
 });
@@ -294,3 +294,4 @@ const PORT=process.env.PORT || 5000;
 app.listen(PORT,()=>{
 console.log("Server running on port "+PORT);
 });
+
