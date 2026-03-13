@@ -34,6 +34,9 @@ key_secret:"vKIIZlJLqn8oQxtel02OorlC"
 ------------------------- */
 
 const transporter = nodemailer.createTransport({
+host:"smtp.gmail.com",
+port:465,
+secure:true,
 service:"gmail",
 auth:{
 user:"safrankankol@gmail.com",
@@ -244,3 +247,4 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT,()=>{
 console.log("Server running on port "+PORT);
 });
+
