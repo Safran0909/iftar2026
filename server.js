@@ -1,296 +1,299 @@
-const express = require("express");
-const Razorpay = require("razorpay");
-const cors = require("cors");
-const nodemailer = require("nodemailer");
-const QRCode = require("qrcode");
-const { Pool } = require("pg");
-const dns = require("dns");
+<!DOCTYPE html>
+<html>
+<head>
+<title>Iftar Meet Scanner</title>
 
-dns.setDefaultResultOrder("ipv4first");
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#000000">
 
-const app = express();
+<script src="https://unpkg.com/html5-qrcode"></script>
 
-app.use(express.json());
-app.use(cors());
-app.use(express.static(__dirname));
+<style>
 
-/* -------------------------
-   PostgreSQL
-------------------------- */
+/* viewport background */
 
-const pool = new Pool({
-connectionString:"postgresql://iftaruser:eS2WSyny9V9uM53uURVywjnKXbd9K1Nc@dpg-d6psquaa214c73ec0b00-a.oregon-postgres.render.com/d6iftar",
-ssl:{rejectUnauthorized:false}
-});
-
-/* -------------------------
-   Razorpay
-------------------------- */
-
-const razorpay = new Razorpay({
-key_id:"rzp_live_SQduemo1jFIx6m",
-key_secret:"vKIIZlJLqn8oQxtel02OorlC"
-});
-
-/* -------------------------
-   Email
-------------------------- */
-
-const transporter = nodemailer.createTransport({
-host:"smtp.gmail.com",
-port:465,
-secure:true,
-auth:{
-user:"safrankankol@gmail.com",
-pass:"uhaz dzqz sttb zfot"
+html{
+height:100%;
+background:linear-gradient(135deg,#000000,#15122a);
+overscroll-behavior:none;
 }
+
+/* body */
+
+body{
+margin:0;
+min-height:100vh;
+font-family:Arial, sans-serif;
+background:linear-gradient(135deg,#000000,#15122a);
+color:white;
+text-align:center;
+padding:20px;
+overscroll-behavior:none;
+}
+
+/* header */
+
+.header{
+padding:15px;
+font-size:26px;
+font-weight:bold;
+}
+
+/* container */
+
+.container{
+max-width:420px;
+margin:auto;
+background:#111;
+padding:25px;
+border-radius:14px;
+box-shadow:0 10px 25px rgba(0,0,0,0.5);
+}
+
+/* dashboard */
+
+.stats{
+display:flex;
+justify-content:space-between;
+margin-bottom:20px;
+gap:10px;
+}
+
+.box{
+background:#1a1a1a;
+padding:12px;
+border-radius:8px;
+flex:1;
+}
+
+.num{
+font-size:22px;
+font-weight:bold;
+}
+
+.label{
+font-size:12px;
+color:#bbb;
+}
+
+/* scanner */
+
+#reader{
+width:100%;
+margin-top:10px;
+border-radius:10px;
+overflow:hidden;
+}
+
+/* result */
+
+#result{
+margin-top:20px;
+font-size:20px;
+font-weight:bold;
+padding:15px;
+border-radius:8px;
+display:none;
+}
+
+.valid{
+background:#28a745;
+}
+
+.used{
+background:#dc3545;
+}
+
+.invalid{
+background:#ffc107;
+color:black;
+}
+
+/* button */
+
+button{
+margin-top:15px;
+padding:12px 20px;
+font-size:16px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+background:#fff;
+color:#000;
+width:100%;
+}
+
+button:hover{
+background:#ddd;
+}
+
+/* mobile */
+
+@media (max-width:480px){
+
+.header{
+font-size:22px;
+}
+
+.num{
+font-size:20px;
+}
+
+.container{
+padding:20px;
+}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="header">
+Iftar Meet Scanner
+</div>
+
+<div class="container">
+
+<!-- Dashboard -->
+
+<div class="stats">
+
+<div class="box">
+<div class="num" id="total">0</div>
+<div class="label">Total</div>
+</div>
+
+<div class="box">
+<div class="num" id="checked">0</div>
+<div class="label">Checked</div>
+</div>
+
+<div class="box">
+<div class="num" id="remaining">0</div>
+<div class="label">Remaining</div>
+</div>
+
+</div>
+
+<!-- Scanner -->
+
+<div id="reader"></div>
+
+<div id="result"></div>
+
+<button onclick="restartScanner()" id="scanAgain" style="display:none;">
+Scan Next Ticket
+</button>
+
+</div>
+
+<script>
+
+let scanner;
+
+/* Load stats */
+
+function loadStats(){
+
+fetch("/stats")
+.then(res=>res.json())
+.then(data=>{
+
+document.getElementById("total").innerText=data.total;
+document.getElementById("checked").innerText=data.checked;
+document.getElementById("remaining").innerText=data.remaining;
+
 });
 
-transporter.verify(function(error){
-if(error){
-console.log("Email server error:",error);
+}
+
+loadStats();
+setInterval(loadStats,5000);
+
+/* QR success */
+
+function onScanSuccess(decodedText){
+
+scanner.clear();
+
+fetch("/checkin",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({ticket:decodedText})
+})
+.then(res=>res.text())
+.then(data=>{
+
+const resultBox=document.getElementById("result");
+
+resultBox.style.display="block";
+
+/* valid */
+
+if(data.includes("Welcome")){
+
+resultBox.className="valid";
+resultBox.innerText=data;
+
+/* used */
+
+}else if(data.includes("Already")){
+
+resultBox.className="used";
+resultBox.innerText=data;
+
+/* invalid */
+
 }else{
-console.log("Email server ready");
-}
-});
 
-/* -------------------------
-   Random Ticket Generator
-------------------------- */
-
-function generateTicket(){
-
-const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-let code="";
-
-for(let i=0;i<6;i++){
-code+=chars[Math.floor(Math.random()*chars.length)];
-}
-
-return "D6-"+code;
-}
-
-/* -------------------------
-   Create Payment Order
-------------------------- */
-
-app.post("/create-order",async(req,res)=>{
-
-try{
-
-const order=await razorpay.orders.create({
-amount:35000,
-currency:"INR",
-receipt:"receipt_"+Date.now()
-});
-
-res.json(order);
-
-}catch(err){
-
-console.log(err);
-res.status(500).send("Order creation failed");
+resultBox.className="invalid";
+resultBox.innerText=data;
 
 }
 
+document.getElementById("scanAgain").style.display="block";
+
+loadStats();
+
 });
-
-/* -------------------------
-   Test Email
-------------------------- */
-
-app.get("/test-email",async(req,res)=>{
-
-try{
-
-await transporter.sendMail({
-from:"safrankankol@gmail.com",
-to:"Safrankankol2@gmail.com",
-subject:"Test Email",
-text:"Email system working!"
-});
-
-res.send("Email sent");
-
-}catch(err){
-
-console.log(err);
-res.send("Email failed");
 
 }
 
-});
+/* start scanner */
 
-/* -------------------------
-   Register Attendee
-------------------------- */
+function startScanner(){
 
-app.post("/register",async(req,res)=>{
-
-const {name,email,phone}=req.body;
-
-if(!name || !email || !phone)
-return res.status(400).send("Missing fields");
-
-try{
-
-/* generate random ticket */
-
-const ticket=generateTicket();
-
-/* insert into DB */
-
-await pool.query(
-"INSERT INTO attendees (name,email,phone,ticket_code) VALUES ($1,$2,$3,$4)",
-[name,email,phone,ticket]
-);
-
-/* create QR */
-
-const qrImage=await QRCode.toDataURL(ticket);
-const base64Data=qrImage.replace(/^data:image\/png;base64,/,"");
-
-/* send ticket to frontend */
-
-res.json({ticket});
-
-/* send email */
-
-transporter.sendMail({
-
-from:"safrankankol@gmail.com",
-to:email,
-subject:"Your Iftar Meet Ticket",
-
-html:`
-<h2>Iftar Meet Ticket</h2>
-
-<p><b>Name:</b> ${name}</p>
-<p><b>Email:</b> ${email}</p>
-<p><b>Phone:</b> ${phone}</p>
-
-<p><b>Ticket Code:</b> ${ticket}</p>
-
-<p>Show this QR code at entry:</p>
-
-<img src="cid:qrcode"/>
-`,
-
-attachments:[
+scanner=new Html5QrcodeScanner(
+"reader",
 {
-filename:"qrcode.png",
-content:base64Data,
-encoding:"base64",
-cid:"qrcode"
+fps:10,
+qrbox:{width:250,height:250}
 }
-]
+);
 
-}).catch(err=>{
-console.log("Email error:",err);
-});
-
-}catch(err){
-
-console.log(err);
-res.status(500).send("Registration failed");
+scanner.render(onScanSuccess);
 
 }
 
-});
+/* restart */
 
-/* -------------------------
-   QR Check-in
-------------------------- */
+function restartScanner(){
 
-app.post("/checkin",async(req,res)=>{
+document.getElementById("result").style.display="none";
+document.getElementById("scanAgain").style.display="none";
 
-const {ticket}=req.body;
-
-try{
-
-const result=await pool.query(
-"SELECT * FROM attendees WHERE ticket_code=$1",
-[ticket]
-);
-
-if(result.rows.length===0)
-return res.send("Invalid Ticket");
-
-const person=result.rows[0];
-
-if(person.checked_in)
-return res.send("Already Checked In");
-
-await pool.query(
-"UPDATE attendees SET checked_in=true WHERE ticket_code=$1",
-[ticket]
-);
-
-res.send("Welcome "+person.name);
-
-}catch(err){
-
-console.log(err);
-res.status(500).send("Scanner error");
+startScanner();
 
 }
 
-});
+startScanner();
 
-/* -------------------------
-   Live Dashboard Stats
-------------------------- */
+</script>
 
-app.get("/stats",async(req,res)=>{
-
-try{
-
-const total=await pool.query(
-"SELECT COUNT(*) FROM attendees"
-);
-
-const checked=await pool.query(
-"SELECT COUNT(*) FROM attendees WHERE checked_in=true"
-);
-
-const totalCount=parseInt(total.rows[0].count);
-const checkedCount=parseInt(checked.rows[0].count);
-
-res.json({
-total:totalCount,
-checked:checkedCount,
-remaining:totalCount-checkedCount
-});
-
-}catch(err){
-
-console.log(err);
-res.status(500).send("Stats error");
-
-}
-
-});
-
-/* -------------------------
-   Admin Attendee List
-------------------------- */
-
-app.get("/attendees",async(req,res)=>{
-
-const result=await pool.query(
-"SELECT * FROM attendees ORDER BY id DESC"
-);
-
-res.json(result.rows);
-
-});
-
-/* -------------------------
-   Start Server
-------------------------- */
-
-const PORT=process.env.PORT || 5000;
-
-app.listen(PORT,()=>{
-console.log("Server running on port "+PORT);
-});
+</body>
+</html>
