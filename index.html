@@ -8,77 +8,69 @@
 <style>
 
 body{
-    margin:0;
-    font-family: Arial, Helvetica, sans-serif;
-    background: linear-gradient(135deg,#000000,#15122a);
-    height:100vh;
-    display:flex;
-    justify-content:center;
-    align-items:center;
+margin:0;
+font-family:Arial, Helvetica, sans-serif;
+background:linear-gradient(135deg,#000000,#15122a);
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
 }
 
 .container{
-    background:white;
-    padding:40px;
-    border-radius:12px;
-    width:350px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.2);
-    text-align:center;
+background:white;
+padding:40px;
+border-radius:12px;
+width:360px;
+box-shadow:0 10px 30px rgba(0,0,0,0.2);
+text-align:center;
 }
 
 .logo{
-    width:200px;
-    margin-bottom:10px;
+width:200px;
+margin-bottom:10px;
 }
 
 .subtitle{
-    color:#777;
-    margin-bottom:20px;
+color:#777;
+margin-bottom:20px;
 }
 
 .price{
-    font-weight:bold;
-    margin-bottom:20px;
+font-weight:bold;
+margin-bottom:20px;
 }
 
 input{
-    width:100%;
-    padding:12px;
-    margin-bottom:15px;
-    border-radius:6px;
-    border:1px solid #ccc;
-    font-size:14px;
+width:100%;
+padding:12px;
+margin:10px 0;
+border-radius:6px;
+border:1px solid #ccc;
+font-size:14px;
 }
 
 input:focus{
-    outline:none;
-    border-color:#000000;
+outline:none;
+border-color:#000;
 }
 
 button{
-    width:300px;
-    padding:14px;
-    background:#000000;
-    color:white;
-    border:none;
-    border-radius:6px;
-    font-size:16px;
-    cursor:pointer;
-    transition:0.2s;
+width:100%;
+padding:14px;
+background:#000;
+color:white;
+border:none;
+border-radius:6px;
+font-size:16px;
+cursor:pointer;
+transition:0.2s;
 }
 
 button:hover{
-    background:#333;
+background:#333;
 }
-input{
-    width:300px;
-    padding:12px;
-    margin:10px auto;
-    border-radius:6px;
-    border:1px solid #ccc;
-    font-size:14px;
-    display:block;
-}
+
 </style>
 
 </head>
@@ -93,11 +85,11 @@ input{
 
 <div class="price">Ticket: ₹350</div>
 
-<input id="name" placeholder="Full Name">
+<input id="name" placeholder="Full Name" required>
 
-<input id="email" placeholder="Email Address">
+<input id="email" type="email" placeholder="Email Address" required>
 
-<input id="phone" placeholder="Phone Number">
+<input id="phone" type="tel" placeholder="Phone Number (10 digits)" required>
 
 <button onclick="payNow()">Register & Pay</button>
 
@@ -107,14 +99,36 @@ input{
 
 async function payNow(){
 
-const name = document.getElementById("name").value;
-const email = document.getElementById("email").value;
-const phone = document.getElementById("phone").value;
+const name = document.getElementById("name").value.trim();
+const email = document.getElementById("email").value.trim();
+const phone = document.getElementById("phone").value.trim();
 
-if(!name || !email || !phone){
-alert("Please fill all fields");
+/* -------------------------
+   Validation
+------------------------- */
+
+if(!name){
+alert("Please enter your name");
 return;
 }
+
+const emailRegex=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+if(!emailRegex.test(email)){
+alert("Enter a valid email address");
+return;
+}
+
+const phoneRegex=/^[0-9]{10}$/;
+
+if(!phoneRegex.test(phone)){
+alert("Phone number must be 10 digits");
+return;
+}
+
+/* -------------------------
+   Create order
+------------------------- */
 
 const res = await fetch("/create-order",{
 method:"POST"
@@ -122,37 +136,66 @@ method:"POST"
 
 const order = await res.json();
 
+/* -------------------------
+   Razorpay
+------------------------- */
+
 var options = {
 
-key: "rzp_live_SQduemo1jFIx6m",
-amount: order.amount,
-currency: "INR",
-order_id: order.id,
-name: "Iftar Meet Ticket",
-description: "Event Entry Ticket",
+key:"rzp_live_SQduemo1jFIx6m",
+
+amount:order.amount,
+currency:"INR",
+order_id:order.id,
+
+name:"Iftar Meet Ticket",
+description:"Event Entry Ticket",
 
 handler: async function () {
 
+try{
+
 const response = await fetch("/register",{
 method:"POST",
-headers:{"Content-Type":"application/json"},
-body: JSON.stringify({name,email,phone})
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+name:name,
+email:email,
+phone:phone
+})
 });
 
-const data = await response.json();
+if(!response.ok){
+throw new Error("Registration failed");
+}
+
+const data=await response.json();
+
+/* Save ticket data */
 
 localStorage.setItem("name",name);
 localStorage.setItem("email",email);
 localStorage.setItem("phone",phone);
 localStorage.setItem("ticket",data.ticket);
 
-window.location.href="/ticket.html";
+/* Redirect */
+
+window.location.href="ticket.html";
+
+}catch(err){
+
+console.error(err);
+alert("Something went wrong while generating your ticket");
+
+}
 
 }
 
 };
 
-var rzp = new Razorpay(options);
+var rzp=new Razorpay(options);
 rzp.open();
 
 }
