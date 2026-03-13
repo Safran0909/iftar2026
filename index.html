@@ -3,6 +3,8 @@
 <head>
 <title>Iftar Meet Registration</title>
 
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
 <!-- EmailJS -->
@@ -18,35 +20,48 @@ body{
 margin:0;
 font-family:Arial, Helvetica, sans-serif;
 background:linear-gradient(135deg,#000000,#15122a);
-height:100vh;
+min-height:100vh;
 display:flex;
 justify-content:center;
 align-items:center;
+padding:20px;
 }
+
+/* container */
 
 .container{
 background:white;
 padding:40px;
 border-radius:12px;
-width:360px;
+max-width:360px;
+width:100%;
 box-shadow:0 10px 30px rgba(0,0,0,0.2);
 text-align:center;
 }
 
+/* logo */
+
 .logo{
-width:200px;
+width:180px;
+max-width:80%;
 margin-bottom:10px;
 }
+
+/* text */
 
 .subtitle{
 color:#777;
 margin-bottom:20px;
+font-size:15px;
 }
 
 .price{
 font-weight:bold;
 margin-bottom:20px;
+font-size:16px;
 }
+
+/* inputs */
 
 input{
 width:100%;
@@ -55,12 +70,15 @@ margin:10px 0;
 border-radius:6px;
 border:1px solid #ccc;
 font-size:14px;
+box-sizing:border-box;
 }
 
 input:focus{
 outline:none;
 border-color:#000;
 }
+
+/* button */
 
 button{
 width:100%;
@@ -76,6 +94,32 @@ transition:0.2s;
 
 button:hover{
 background:#333;
+}
+
+/* mobile adjustments */
+
+@media (max-width:480px){
+
+.container{
+padding:25px;
+}
+
+.subtitle{
+font-size:14px;
+}
+
+.price{
+font-size:15px;
+}
+
+input{
+font-size:16px;
+}
+
+button{
+font-size:16px;
+}
+
 }
 
 </style>
@@ -131,7 +175,7 @@ return;
 
 /* Create order */
 
-const res = await fetch("/create-order",{ method:"POST" });
+const res = await fetch("/create-order",{method:"POST"});
 const order = await res.json();
 
 /* Razorpay */
@@ -139,6 +183,7 @@ const order = await res.json();
 var options = {
 
 key:"rzp_live_SQduemo1jFIx6m",
+
 amount:order.amount,
 currency:"INR",
 order_id:order.id,
@@ -149,8 +194,6 @@ description:"Event Entry Ticket",
 handler: async function () {
 
 try{
-
-/* Register attendee */
 
 const response = await fetch("/register",{
 method:"POST",
@@ -170,9 +213,8 @@ throw new Error("Registration failed");
 
 const data = await response.json();
 
-/* Send email */
+/* Send Email */
 
-try{
 await emailjs.send(
 "service_5lzf9xi",
 "template_aw6i209",
@@ -183,11 +225,8 @@ phone:phone,
 ticket:data.ticket
 }
 );
-}catch(e){
-console.log("Email send failed:", e);
-}
 
-/* Save ticket locally */
+/* Save ticket */
 
 localStorage.setItem("name",name);
 localStorage.setItem("email",email);
