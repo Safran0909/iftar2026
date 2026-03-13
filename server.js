@@ -12,6 +12,7 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 app.use(express.static(__dirname));
+
 /* -------------------------
    PostgreSQL
 ------------------------- */
@@ -40,25 +41,25 @@ port: 587,
 secure: false,
 auth: {
 user: "safrankankol@gmail.com",
-pass: "uhaz dzqz sttb zfot"
+pass: "uhazdzqzsttbzfot"   // FIXED (no spaces)
 }
 });
 
 transporter.verify(function(error, success) {
-  if (error) {
-    console.log("Email server error:", error);
-  } else {
-    console.log("Email server ready");
-  }
+if (error) {
+console.log("Email server error:", error);
+} else {
+console.log("Email server ready");
+}
 });
 
 /* -------------------------
    Create Payment Order
 ------------------------- */
 
-app.post("/create-order",async(req,res)=>{
+app.post("/create-order", async (req,res) => {
 
-try{
+try {
 
 const order = await razorpay.orders.create({
 amount:100,
@@ -77,30 +78,39 @@ res.status(500).send("Order creation failed");
 
 });
 
+/* -------------------------
+   Test Email
+------------------------- */
+
 app.get("/test-email", async (req,res)=>{
+
 try{
+
 await transporter.sendMail({
 from:"safrankankol@gmail.com",
 to:"Safrankankol2@gmail.com",
 subject:"Test Email",
 text:"Email system working!"
 });
+
 res.send("Email sent");
+
 }catch(err){
+
 console.log(err);
 res.send("Email failed");
+
 }
+
 });
 
 /* -------------------------
    Register Attendee
 ------------------------- */
 
-app.post("/register",async(req,res)=>{
+app.post("/register", async (req,res)=>{
 
 const {name,email,phone} = req.body;
-
-/* Validation */
 
 if(!name || !email || !phone)
 return res.status(400).send("Missing fields");
@@ -126,7 +136,7 @@ await pool.query(
 const qrImage = await QRCode.toDataURL(ticket);
 const base64Data = qrImage.replace(/^data:image\/png;base64,/,"");
 
-/* IMPORTANT: send ticket to frontend immediately */
+/* Send ticket to frontend immediately */
 
 res.json({ticket});
 
@@ -178,7 +188,7 @@ res.status(500).send("Registration failed");
    QR Check-in
 ------------------------- */
 
-app.post("/checkin",async(req,res)=>{
+app.post("/checkin", async (req,res)=>{
 
 const {ticket}=req.body;
 
@@ -217,7 +227,7 @@ res.status(500).send("Scanner error");
    Live Dashboard Stats
 ------------------------- */
 
-app.get("/stats",async(req,res)=>{
+app.get("/stats", async (req,res)=>{
 
 try{
 
@@ -251,7 +261,7 @@ res.status(500).send("Stats error");
    Admin Attendee List
 ------------------------- */
 
-app.get("/attendees",async(req,res)=>{
+app.get("/attendees", async (req,res)=>{
 
 const result = await pool.query(
 "SELECT * FROM attendees ORDER BY id DESC"
@@ -270,6 +280,3 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT,()=>{
 console.log("Server running on port "+PORT);
 });
-
-
-
