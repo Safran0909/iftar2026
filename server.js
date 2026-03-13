@@ -32,14 +32,22 @@ key_secret:"vKIIZlJLqn8oQxtel02OorlC"
    Email
 ------------------------- */
 
-const transporter = nodemailer.createTransport({host:"smtp.gmail.com",
-port:465,
-secure:true,
-service:"gmail",
-auth:{
-user:"safrankankol@gmail.com",
-pass:"uhaz dzqz sttb zfot"
+const transporter = nodemailer.createTransport({
+host: "smtp.gmail.com",
+port: 465,
+secure: true,
+auth: {
+user: "safrankankol@gmail.com",
+pass: "uhazdzqzsttbzfot"
 }
+});
+
+transporter.verify(function(error, success) {
+  if (error) {
+    console.log("Email server error:", error);
+  } else {
+    console.log("Email server ready");
+  }
 });
 
 /* -------------------------
@@ -65,6 +73,21 @@ res.status(500).send("Order creation failed");
 
 }
 
+});
+
+app.get("/test-email", async (req,res)=>{
+try{
+await transporter.sendMail({
+from:"safrankankol@gmail.com",
+to:"Safrankankol2@gmail.com",
+subject:"Test Email",
+text:"Email system working!"
+});
+res.send("Email sent");
+}catch(err){
+console.log(err);
+res.send("Email failed");
+}
 });
 
 /* -------------------------
