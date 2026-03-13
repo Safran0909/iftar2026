@@ -3,41 +3,53 @@
 <head>
 <title>Your Event Ticket</title>
 
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <style>
 
 body{
 margin:0;
-font-family: Arial, sans-serif;
-background: linear-gradient(135deg,#000000,#15122a);
+font-family:Arial, sans-serif;
+background:linear-gradient(135deg,#000000,#15122a);
 display:flex;
 justify-content:center;
 align-items:center;
-height:100vh;
+min-height:100vh;
+padding:20px;
 }
+
+/* ticket card */
 
 .ticket{
 background:white;
 padding:35px;
-width:360px;
+max-width:360px;
+width:100%;
 border-radius:16px;
 box-shadow:0 15px 35px rgba(0,0,0,0.4);
 text-align:center;
 position:relative;
 }
 
-.event-title{
-font-size:24px;
-font-weight:bold;
-margin-bottom:5px;
+/* logo */
+
+.logo{
+width:180px;
+max-width:80%;
+margin-bottom:10px;
 }
+
+/* title */
 
 .event-sub{
 color:#777;
 font-size:14px;
 margin-bottom:25px;
 }
+
+/* sections */
 
 .section{
 text-align:left;
@@ -54,6 +66,7 @@ margin-bottom:3px;
 .value{
 font-size:16px;
 font-weight:500;
+word-break:break-word;
 }
 
 .ticket-code{
@@ -63,11 +76,15 @@ color:#000;
 margin-top:5px;
 }
 
+/* divider */
+
 .divider{
 height:1px;
 background:#eee;
 margin:20px 0;
 }
+
+/* qr */
 
 .qr{
 display:flex;
@@ -75,14 +92,30 @@ justify-content:center;
 margin-top:10px;
 }
 
+/* note */
+
 .note{
 margin-top:15px;
 font-size:12px;
 color:#777;
 }
-.logo{
-    width:200px;
-    margin-bottom:10px;
+
+/* mobile adjustments */
+
+@media (max-width:480px){
+
+.ticket{
+padding:25px;
+}
+
+.value{
+font-size:15px;
+}
+
+.ticket-code{
+font-size:22px;
+}
+
 }
 
 </style>
@@ -93,7 +126,8 @@ color:#777;
 
 <div class="ticket">
 
-<div class="event-title"><img src="yes.png" class="logo"></div>
+<img src="yes.png" class="logo">
+
 <div class="event-sub">Entry Pass</div>
 
 <div class="section">
@@ -133,12 +167,14 @@ const email = localStorage.getItem("email");
 const phone = localStorage.getItem("phone");
 const ticket = localStorage.getItem("ticket");
 
-document.getElementById("name").innerText = name;
-document.getElementById("email").innerText = email;
-document.getElementById("phone").innerText = phone;
-document.getElementById("ticket").innerText = ticket;
+document.getElementById("name").innerText = name || "";
+document.getElementById("email").innerText = email || "";
+document.getElementById("phone").innerText = phone || "";
+document.getElementById("ticket").innerText = ticket || "";
 
-new QRCode(document.getElementById("qrcode"), {
+/* generate QR */
+
+new QRCode(document.getElementById("qrcode"),{
 text: ticket,
 width:150,
 height:150
