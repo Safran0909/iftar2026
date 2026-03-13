@@ -4,29 +4,41 @@
 <title>Your Event Ticket</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#000000">
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
 <style>
 
+/* viewport background */
+
+html{
+height:100%;
+background:linear-gradient(135deg,#000000,#15122a);
+overscroll-behavior:none;
+}
+
+/* body */
+
 body{
 margin:0;
+min-height:100vh;
 font-family:Arial, sans-serif;
 background:linear-gradient(135deg,#000000,#15122a);
 display:flex;
 justify-content:center;
 align-items:center;
-min-height:100vh;
 padding:20px;
+overscroll-behavior:none;
 }
 
-/* ticket card */
+/* ticket */
 
 .ticket{
 background:white;
 padding:35px;
-max-width:360px;
-width:100%;
+width:360px;
+max-width:100%;
 border-radius:16px;
 box-shadow:0 15px 35px rgba(0,0,0,0.4);
 text-align:center;
@@ -36,12 +48,12 @@ position:relative;
 /* logo */
 
 .logo{
-width:180px;
+width:200px;
 max-width:80%;
 margin-bottom:10px;
 }
 
-/* title */
+/* subtitle */
 
 .event-sub{
 color:#777;
@@ -68,6 +80,8 @@ font-size:16px;
 font-weight:500;
 word-break:break-word;
 }
+
+/* ticket code */
 
 .ticket-code{
 font-size:24px;
@@ -100,7 +114,7 @@ font-size:12px;
 color:#777;
 }
 
-/* mobile adjustments */
+/* mobile improvements */
 
 @media (max-width:480px){
 
@@ -126,7 +140,9 @@ font-size:22px;
 
 <div class="ticket">
 
+<div class="event-title">
 <img src="yes.png" class="logo">
+</div>
 
 <div class="event-sub">Entry Pass</div>
 
@@ -172,7 +188,7 @@ document.getElementById("email").innerText = email || "";
 document.getElementById("phone").innerText = phone || "";
 document.getElementById("ticket").innerText = ticket || "";
 
-/* generate QR */
+/* QR generation */
 
 new QRCode(document.getElementById("qrcode"),{
 text: ticket,
