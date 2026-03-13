@@ -1,40 +1,143 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Ticket Scanner</title>
+<title>Iftar Meet Ticket Scanner</title>
+
 <script src="https://unpkg.com/html5-qrcode"></script>
+
+<style>
+
+body{
+font-family: Arial, sans-serif;
+background:#000;
+color:white;
+text-align:center;
+padding-top:30px;
+}
+
+h2{
+margin-bottom:20px;
+}
+
+#reader{
+width:320px;
+margin:auto;
+}
+
+#result{
+margin-top:20px;
+font-size:22px;
+font-weight:bold;
+padding:15px;
+border-radius:8px;
+display:none;
+}
+
+.valid{
+background:#28a745;
+}
+
+.used{
+background:#dc3545;
+}
+
+.invalid{
+background:#ffc107;
+color:black;
+}
+
+button{
+margin-top:20px;
+padding:12px 20px;
+font-size:16px;
+border:none;
+border-radius:6px;
+cursor:pointer;
+}
+
+</style>
+
 </head>
 
 <body>
 
-<h2>Scan Ticket</h2>
+<h2>Iftar Meet Scanner</h2>
 
-<div id="reader" style="width:300px"></div>
+<div id="reader"></div>
+
+<div id="result"></div>
+
+<button onclick="restartScanner()" id="scanAgain" style="display:none;">
+Scan Next Ticket
+</button>
 
 <script>
 
-function onScanSuccess(decodedText) {
+let scanner;
 
-    fetch("/checkin", {
-        method:"POST",
-        headers:{
-            "Content-Type":"application/json"
-        },
-        body: JSON.stringify({ ticket: decodedText })
-    })
-    .then(res=>res.text())
-    .then(data=>{
-        alert(data);
-    });
+function onScanSuccess(decodedText){
+
+scanner.clear();
+
+fetch("/checkin",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({ticket:decodedText})
+})
+.then(res=>res.text())
+.then(data=>{
+
+const resultBox = document.getElementById("result");
+resultBox.style.display="block";
+
+if(data.includes("Welcome")){
+
+resultBox.className="valid";
+resultBox.innerText=data;
+
+}
+else if(data.includes("Already")){
+
+resultBox.className="used";
+resultBox.innerText=data;
+
+}
+else{
+
+resultBox.className="invalid";
+resultBox.innerText=data;
 
 }
 
-const scanner = new Html5QrcodeScanner(
-    "reader",
-    { fps: 10, qrbox: 250 }
+document.getElementById("scanAgain").style.display="inline-block";
+
+});
+
+}
+
+function startScanner(){
+
+scanner = new Html5QrcodeScanner(
+"reader",
+{fps:10, qrbox:250}
 );
 
 scanner.render(onScanSuccess);
+
+}
+
+function restartScanner(){
+
+document.getElementById("result").style.display="none";
+document.getElementById("scanAgain").style.display="none";
+
+startScanner();
+
+}
+
+startScanner();
 
 </script>
 
