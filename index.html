@@ -1,268 +1,430 @@
 <!DOCTYPE html>
-<html>
-<head>
-<title>Iftar Meet Registration</title>
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#000000">
-
-<!-- Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-E6NTNRRFFC"></script>
-<script>
-window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
-gtag('config', 'G-E6NTNRRFFC');
-</script>
-
-<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-
-<!-- EmailJS -->
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Iftar Meet - Registration &amp; Tickets</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<!-- External Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
-
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 <script>
-emailjs.init("vYRMUiaEOCkjAGqGj");
-</script>
-
+        // Initialize EmailJS
+        (function() {
+            emailjs.init("vYRMUiaEOCkjAGqGj");
+        })();
+    </script>
 <style>
+        :root {
+            /* Theme Tokens from THEME_8: custom_color #dfb52a */
+            --primary-gold: #dfb52a;
+            --primary-gold-hover: #c9a326;
+            --bg-dark: #0a0e17; /* Deep Navy/Charcoal */
+            --card-bg: #141b29;
+            --input-bg: #0a0e17;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border-color: #1e293b;
+            --radius: 8px; /* ROUND_EIGHT */
+        }
 
-/* Make the viewport itself use the gradient */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
 
-html{
-height:100%;
-background:linear-gradient(135deg,#000000,#15122a);
-overscroll-behavior:none;
-}
+        body {
+            background-color: var(--bg-dark);
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(215,98%,61%,0.04) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, hsla(45,89%,58%,0.03) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
 
-/* Page */
+        .registration-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 24px; /* Keeping specific large radius for card to match original aesthetic with theme adjustments */
+            width: 100%;
+            max-width: 500px;
+            padding: 48px 40px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+            text-align: center;
+        }
 
-body{
-margin:0;
-min-height:100vh;
-font-family:Arial, Helvetica, sans-serif;
-background:linear-gradient(135deg,#000000,#15122a);
-display:flex;
-justify-content:center;
-align-items:center;
-padding:20px;
-overscroll-behavior:none;
-}
+        .logo-container {
+            width: 80px;
+            height: 80px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+        }
 
-/* container */
+        .logo-container svg {
+            width: 40px;
+            height: 40px;
+            fill: var(--primary-gold);
+        }
 
-.container{
-background:white;
-padding:40px;
-border-radius:12px;
-max-width:360px;
-width:100%;
-box-shadow:0 10px 30px rgba(0,0,0,0.2);
-text-align:center;
-}
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 42px;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
 
-/* logo */
+        .event-tagline {
+            color: var(--primary-gold);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 24px;
+        }
 
-.logo{
-width:180px;
-max-width:80%;
-margin-bottom:10px;
-}
+        .event-description {
+            color: var(--text-muted);
+            font-size: 15px;
+            line-height: 1.6;
+            margin-bottom: 32px;
+        }
 
-/* text */
+        .event-details {
+            display: flex;
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 32px;
+            padding: 16px 0;
+        }
 
-.subtitle{
-color:#777;
-margin-bottom:20px;
-font-size:15px;
-}
+        .detail-item {
+            flex: 1;
+            text-align: center;
+        }
 
-.price{
-font-weight:bold;
-margin-bottom:20px;
-font-size:16px;
-}
+        .detail-item:first-child {
+            border-right: 1px solid var(--border-color);
+        }
 
-/* inputs */
+        .detail-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 4px;
+        }
 
-input{
-width:100%;
-padding:12px;
-margin:10px 0;
-border-radius:6px;
-border:1px solid #ccc;
-font-size:14px;
-box-sizing:border-box;
-}
+        .detail-value {
+            font-size: 18px;
+            font-weight: 600;
+        }
 
-input:focus{
-outline:none;
-border-color:#000;
-}
+        .form-group {
+            text-align: left;
+            margin-bottom: 20px;
+        }
 
-/* button */
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
 
-button{
-width:100%;
-padding:14px;
-background:#000;
-color:white;
-border:none;
-border-radius:6px;
-font-size:16px;
-cursor:pointer;
-transition:0.2s;
-}
+        input {
+            width: 100%;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 14px 16px;
+            color: var(--text-main);
+            font-size: 15px;
+            transition: all 0.2s;
+        }
 
-button:hover{
-background:#333;
-}
+        input:focus {
+            outline: none;
+            border-color: var(--primary-gold);
+            box-shadow: 0 0 0 4px rgba(223, 181, 42, 0.1);
+        }
 
-/* mobile */
+        .btn-register {
+            width: 100%;
+            background: var(--primary-gold);
+            color: #000;
+            border: none;
+            border-radius: var(--radius);
+            padding: 16px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 12px;
+        }
 
-@media (max-width:480px){
+        .btn-register:hover {
+            background: var(--primary-gold-hover);
+            transform: translateY(-1px);
+        }
 
-.container{
-padding:25px;
-}
+        .btn-register:active {
+            transform: translateY(0);
+        }
 
-.subtitle{
-font-size:14px;
-}
+        .footer-note {
+            margin-top: 24px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
 
-.price{
-font-size:15px;
-}
+        .copyright {
+            margin-top: 48px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
 
-input{
-font-size:16px;
-}
+        .legal-links {
+            margin-top: 12px;
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
 
-button{
-font-size:16px;
-}
+        .legal-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
 
-}
+        .legal-links a:hover {
+            color: var(--text-main);
+        }
 
-</style>
+        .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(0,0,0,0.1);
+            border-top: 2px solid #000;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
 
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 640px) {
+            .registration-card {
+                padding: 32px 24px;
+                border-radius: 0;
+                border: none;
+                background: transparent;
+                box-shadow: none;
+            }
+            body {
+                padding: 0;
+                justify-content: flex-start;
+            }
+        }
+    </style>
 </head>
-
 <body>
-
-<div class="container">
-
-<img src="yes.png" class="logo">
-
-<div class="subtitle">Reserve your seat for the event</div>
-
-<div class="price">Ticket: ₹350</div>
-
-<input id="name" placeholder="Full Name" required>
-<input id="email" type="email" placeholder="Email Address" required>
-<input id="phone" type="tel" placeholder="Phone Number (10 digits)" required>
-
-<button onclick="payNow()">Register & Pay</button>
-
+<div class="registration-card">
+    <img src="new.png" class="logo" style="max-width: 240px; width: 100%; height: auto; margin: 0 auto 24px; display: block;"/><div class="event-tagline">Community • Tradition • Connection</div>
+<p class="event-description">
+            Join us for an evening of spiritual reflection and community bonding as we break our fast together. An elegant dinner and program await.
+        </p>
+<div class="event-details">
+<div class="detail-item">
+<div class="detail-label">Ticket Price</div>
+<div class="detail-value">₹350</div>
 </div>
-
+<div class="detail-item">
+<div class="detail-label">Date &amp; Time</div>
+<div class="detail-value">March 14th, 6:35 PM</div>
+</div>
+</div>
+<form id="registrationForm" onsubmit="handleRegistration(event)">
+<div class="form-group">
+<label for="name">Full Name</label>
+<input id="name" placeholder="Full Name" required="" type="text"/>
+</div>
+<div class="form-group">
+<label for="email">Email Address</label>
+<input id="email" placeholder="name@example.com" required="" type="email"/>
+</div>
+<div class="form-group">
+<label for="phone">Phone Number</label>
+<input id="phone" placeholder="+91 000 000-0000" required="" type="tel"/>
+</div>
+<button class="btn-register" id="submitBtn" type="submit">
+<span id="btnText">Register &amp; Pay</span>
+<div class="spinner" id="btnSpinner"></div>
+<svg fill="none" height="18" id="btnIcon" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" viewbox="0 0 24 24" width="18"><line x1="5" x2="19" y1="12" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+</button>
+</form>
+<p class="footer-note">
+            Secured payment via Razorpay. A confirmation email will be sent upon success.
+        </p>
+</div>
+<div class="copyright">
+        © 2026 Iftar Meet Community. All rights reserved.
+    </div>
+<div class="legal-links">
+<a href="#">Privacy Policy</a>
+<a href="#">Terms of Service</a>
+<a href="#">Contact Us</a>
+</div>
 <script>
+async function handleRegistration(event) {
+    event.preventDefault();
+    
+    const name = document.getElementById("name").value;
+    const email = document.getElementById("email").value;
+    const phone = document.getElementById("phone").value;
 
-async function payNow(){
+    const submitBtn = document.getElementById("submitBtn");
+    const btnText = document.getElementById("btnText");
+    const btnSpinner = document.getElementById("btnSpinner");
+    const btnIcon = document.getElementById("btnIcon");
 
-const name = document.getElementById("name").value.trim();
-const email = document.getElementById("email").value.trim();
-const phone = document.getElementById("phone").value.trim();
+    if(!name || !email || !phone){
+        alert("Please fill all fields");
+        return;
+    }
 
-if(!name){
-alert("Please enter your name");
-return;
+    submitBtn.disabled = true;
+    btnText.innerText = "Processing...";
+    btnSpinner.style.display = "block";
+    btnIcon.style.display = "none";
+
+    try{
+
+        /* STEP 1: Create Razorpay order */
+
+        const orderReq = await fetch("/create-order",{
+            method:"POST"
+        });
+
+        const order = await orderReq.json();
+
+        /* STEP 2: Open Razorpay */
+
+        const options = {
+
+            key: "rzp_live_SQduemo1jFIx6m",
+
+            amount: order.amount,
+            currency: "INR",
+            order_id: order.id,
+
+            name: "Iftar Meet",
+            description: "Event Registration Ticket",
+
+            prefill:{
+                name:name,
+                email:email,
+                contact:phone
+            },
+
+            handler: async function(response){
+
+                try{
+
+                    /* STEP 3: Register AFTER payment */
+
+                    const register = await fetch("/register",{
+                        method:"POST",
+                        headers:{
+                            "Content-Type":"application/json"
+                        },
+                        body:JSON.stringify({
+                            name:name,
+                            email:email,
+                            phone:phone,
+                            razorpay_payment_id:response.razorpay_payment_id,
+                            razorpay_order_id:response.razorpay_order_id,
+                            razorpay_signature:response.razorpay_signature
+                        })
+                    });
+
+                    const data = await register.json();
+
+                    /* STEP 4: Store credentials for ticket page */
+
+                    localStorage.setItem("name",name);
+                    localStorage.setItem("email",email);
+                    localStorage.setItem("phone",phone);
+                    localStorage.setItem("ticket",data.ticket);
+
+                    /* STEP 5: Send email */
+
+                    await emailjs.send(
+                        "service_5lzf9xi",
+                        "template_aw6i209",
+                        {
+                            name:name,
+                            email:email,
+                            phone:phone,
+                            ticket:data.ticket,
+                            payment_id:response.razorpay_payment_id
+                        }
+                    );
+
+                    /* STEP 6: Go to ticket page */
+
+                    window.location.href="ticket.html";
+
+                }catch(err){
+                    console.error(err);
+                    alert("Ticket generation failed");
+                }
+
+            }
+
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.open();
+
+    }catch(err){
+        console.error(err);
+        alert("Something went wrong. Please try again.");
+    }
+
+    submitBtn.disabled = false;
+    btnText.innerText = "Register & Pay";
+    btnSpinner.style.display = "none";
+    btnIcon.style.display = "block";
 }
-
-const emailRegex=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-if(!emailRegex.test(email)){
-alert("Enter a valid email address");
-return;
-}
-
-const phoneRegex=/^[0-9]{10}$/;
-
-if(!phoneRegex.test(phone)){
-alert("Phone number must be 10 digits");
-return;
-}
-
-const res = await fetch("/create-order",{method:"POST"});
-const order = await res.json();
-
-var options = {
-
-key:"rzp_live_SQduemo1jFIx6m",
-
-amount:order.amount,
-currency:"INR",
-order_id:order.id,
-
-name:"Iftar Meet Ticket",
-description:"Event Entry Ticket",
-
-handler: async function () {
-
-try{
-
-const response = await fetch("/register",{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({
-name:name,
-email:email,
-phone:phone
-})
-});
-
-if(!response.ok){
-throw new Error("Registration failed");
-}
-
-const data = await response.json();
-
-await emailjs.send(
-"service_5lzf9xi",
-"template_aw6i209",
-{
-name:name,
-email:email,
-phone:phone,
-ticket:data.ticket
-}
-);
-
-localStorage.setItem("name",name);
-localStorage.setItem("email",email);
-localStorage.setItem("phone",phone);
-localStorage.setItem("ticket",data.ticket);
-
-window.location.href="ticket.html";
-
-}catch(err){
-
-console.error(err);
-alert("Something went wrong while generating your ticket");
-
-}
-
-}
-
-};
-
-var rzp=new Razorpay(options);
-rzp.open();
-
-}
-
 </script>
-
-</body>
-</html>
+<script async="" src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+<script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXXXXX');
+    </script>
+</body></html>
