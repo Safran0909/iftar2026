@@ -100,6 +100,16 @@ background:#007bff;
 color:white;
 }
 
+.checkedbtn{
+background:#20c997;
+color:white;
+}
+
+.notcheckedbtn{
+background:#ffc107;
+color:black;
+}
+
 /* Table */
 
 .table-container{
@@ -138,16 +148,13 @@ font-weight:bold;
 /* Mobile */
 
 @media (max-width:600px){
-
 th,td{
 font-size:13px;
 padding:10px;
 }
-
 }
 
 </style>
-
 </head>
 
 <body>
@@ -155,7 +162,6 @@ padding:10px;
 <h1>Iftar Meet Admin</h1>
 
 <div class="stats">
-
 <div class="box">
 <div class="num" id="total">0</div>
 <div class="label">Total</div>
@@ -170,7 +176,6 @@ padding:10px;
 <div class="num" id="remaining">0</div>
 <div class="label">Not Scanned</div>
 </div>
-
 </div>
 
 <div class="search">
@@ -180,12 +185,12 @@ padding:10px;
 <div class="sort">
 <button class="asc" onclick="sortAsc()">Oldest</button>
 <button class="desc" onclick="sortDesc()">Newest</button>
+<button class="checkedbtn" onclick="sortChecked()">Checked First</button>
+<button class="notcheckedbtn" onclick="sortNotChecked()">Not Scanned First</button>
 </div>
 
 <div class="table-container">
-
 <table>
-
 <thead>
 <tr>
 <th>#</th>
@@ -196,11 +201,8 @@ padding:10px;
 <th>Status</th>
 </tr>
 </thead>
-
 <tbody id="list"></tbody>
-
 </table>
-
 </div>
 
 <script>
@@ -210,37 +212,28 @@ let attendees=[];
 /* Load stats */
 
 async function loadStats(){
-
 const res=await fetch("/stats");
 const data=await res.json();
 
 document.getElementById("total").innerText=data.total;
 document.getElementById("checked").innerText=data.checked;
 document.getElementById("remaining").innerText=data.remaining;
-
 }
 
 /* Load attendees */
 
 async function loadAttendees(){
-
 const res=await fetch("/attendees");
 attendees=await res.json();
 
-/* default = oldest */
-
 attendees.sort((a,b)=>a.id-b.id);
-
 renderTable(attendees);
-
 }
 
 /* Render */
 
 function renderTable(data){
-
 const table=document.getElementById("list");
-
 table.innerHTML="";
 
 data.forEach((person,index)=>{
@@ -261,57 +254,65 @@ table.innerHTML+=`
 `;
 
 });
-
 }
 
 /* Search */
 
 document.getElementById("search").addEventListener("input",function(){
-
 const q=this.value.toLowerCase();
 
 const filtered=attendees.filter(p=>
-
 p.name.toLowerCase().includes(q) ||
 p.email.toLowerCase().includes(q) ||
 p.phone.includes(q) ||
 p.ticket_code.toLowerCase().includes(q)
-
 );
 
 renderTable(filtered);
-
 });
 
 /* Sort oldest */
 
 function sortAsc(){
-
 attendees.sort((a,b)=>a.id-b.id);
 renderTable(attendees);
-
 }
 
 /* Sort newest */
 
 function sortDesc(){
-
 attendees.sort((a,b)=>b.id-a.id);
 renderTable(attendees);
+}
 
+/* Sort checked first */
+
+function sortChecked(){
+attendees.sort((a,b)=>{
+if(a.checked_in===b.checked_in) return 0;
+return a.checked_in ? -1 : 1;
+});
+renderTable(attendees);
+}
+
+/* Sort not checked first */
+
+function sortNotChecked(){
+attendees.sort((a,b)=>{
+if(a.checked_in===b.checked_in) return 0;
+return a.checked_in ? 1 : -1;
+});
+renderTable(attendees);
 }
 
 /* Refresh */
 
 function refresh(){
-
 loadStats();
 loadAttendees();
-
 }
 
 refresh();
-
 setInterval(refresh,5000);
 
 </script>
