@@ -1,21 +1,17 @@
 <!DOCTYPE html>
-<html>
-<head>
+
+<html><head>
+<meta charset="utf-8"/>
 <title>Your Event Ticket</title>
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="theme-color" content="#000000">
-
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<meta content="#0a0e17" name="theme-color"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
 <style>
-
-/* viewport background */
-
 html{
 height:100%;
-background:linear-gradient(135deg,#000000,#15122a);
-overscroll-behavior:none;
+background-color:#0a0e17;
 }
 
 /* body */
@@ -23,46 +19,54 @@ overscroll-behavior:none;
 body{
 margin:0;
 min-height:100vh;
-font-family:Arial, sans-serif;
-background:linear-gradient(135deg,#000000,#15122a);
+font-family:'Inter', sans-serif;
+background-color: var(--bg-dark);
+background-image: 
+                radial-gradient(at 0% 0%, hsla(215,98%,61%,0.04) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, hsla(45,89%,58%,0.03) 0px, transparent 50%);
 display:flex;
 justify-content:center;
 align-items:center;
-min-height:100vh;
 padding:20px;
 overscroll-behavior:none;
+color:#f1f5f9;
 }
 
 /* ticket card */
-/* ticket */
 
 .ticket{
-background:white;
+background:rgba(20, 27, 41, 0.8);
+backdrop-filter:blur(12px);
+-webkit-backdrop-filter:blur(12px);
 padding:35px;
-max-width:360px;
-width:100%;
-width:360px;
-max-width:100%;
+
+width:500px;
+max-width:500px;
+
 border-radius:16px;
-box-shadow:0 15px 35px rgba(0,0,0,0.4);
+
+border:1px solid #1e293b;
+
+box-shadow:0 15px 35px rgba(0,0,0,0.5);
+
 text-align:center;
 position:relative;
+
+box-sizing:border-box;
 }
 
 /* logo */
 
 .logo{
-width:180px;
 width:200px;
 max-width:80%;
 margin-bottom:10px;
 }
 
-/* title */
 /* subtitle */
 
 .event-sub{
-color:#777;
+color:#dfb52a;
 font-size:14px;
 margin-bottom:25px;
 }
@@ -74,25 +78,34 @@ text-align:left;
 margin-bottom:15px;
 }
 
+/* label */
+
 .label{
-color:#888;
+color:#dfb52a;
 font-size:11px;
-letter-spacing:1px;
-margin-bottom:3px;
+font-weight:600;
+text-transform:uppercase;
+letter-spacing:1.5px;
+margin-bottom:2px;
+opacity: 0.9;
 }
+
+/* value */
 
 .value{
 font-size:16px;
 font-weight:500;
 word-break:break-word;
+margin-bottom:6px;
 }
 
 /* ticket code */
 
 .ticket-code{
+font-family:'Playfair Display', serif;
 font-size:24px;
 font-weight:bold;
-color:#000;
+color:#f1f5f9;
 margin-top:5px;
 }
 
@@ -100,16 +113,23 @@ margin-top:5px;
 
 .divider{
 height:1px;
-background:#eee;
+background:#1e293b;
 margin:20px 0;
 }
 
 /* qr */
+.qr-wrapper{
+background:#ffffff;
+padding:15px;
+border-radius:12px;
+display:inline-block;
+margin-top:10px;
+box-shadow:0 4px 15px rgba(0,0,0,0.3);
+}
 
 .qr{
 display:flex;
 justify-content:center;
-margin-top:10px;
 }
 
 /* note */
@@ -117,11 +137,10 @@ margin-top:10px;
 .note{
 margin-top:15px;
 font-size:12px;
-color:#777;
+color:#94a3b8;
 }
 
-/* mobile adjustments */
-/* mobile improvements */
+/* mobile */
 
 @media (max-width:480px){
 
@@ -138,73 +157,60 @@ font-size:22px;
 }
 
 }
-
 </style>
-
 </head>
-
 <body>
-
 <div class="ticket">
-
 <div class="event-title">
-<img src="yes.png" class="logo">
+    <img src="new.png" class="logo" style="max-width: 240px; width: 100%; height: auto; margin: 0 auto 24px; display: block;"/><div class="event-tagline"></div>
 </div>
-
-<div class="event-sub">Entry Pass</div>
-
+<div class="event-sub" style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 32px";>Digital Entry Pass</div>
 <div class="section">
 <div class="label">ATTENDEE</div>
-<div class="value" id="name"></div>
+<div class="value" id="name">Loading...</div>
 </div>
-
 <div class="section">
-<div class="label">EMAIL</div>
-<div class="value" id="email"></div>
+<div class="label">EMAIL ADDRESS</div>
+<div class="value" id="email">Loading...</div>
 </div>
-
 <div class="section">
 <div class="label">PHONE</div>
-<div class="value" id="phone"></div>
+<div class="value" id="phone">Loading...</div>
 </div>
-
 <div class="divider"></div>
-
 <div class="section">
 <div class="label">TICKET CODE</div>
-<div class="ticket-code" id="ticket"></div>
+<div class="ticket-code" id="ticket">---</div>
 </div>
-
+<div class="qr-wrapper">
 <div class="qr" id="qrcode"></div>
-
+</div>
 <div class="note">
-Show this QR code at the event entrance
+        Please present this digital pass at the entrance.<br/>
+        Traditional evening • April 5th, 6:30 PM
+    </div>
 </div>
-
-</div>
-
 <script>
+    const name = localStorage.getItem("name");
+    const email = localStorage.getItem("email");
+    const phone = localStorage.getItem("phone");
+    const ticket = localStorage.getItem("ticket");
 
-const name = localStorage.getItem("name");
-const email = localStorage.getItem("email");
-const phone = localStorage.getItem("phone");
-const ticket = localStorage.getItem("ticket");
+    document.getElementById("name").innerText = name || "Guest User";
+    document.getElementById("email").innerText = email || "Not provided";
+    document.getElementById("phone").innerText = phone || "Not provided";
+    document.getElementById("ticket").innerText = ticket || "PENDING";
 
-document.getElementById("name").innerText = name || "";
-document.getElementById("email").innerText = email || "";
-document.getElementById("phone").innerText = phone || "";
-document.getElementById("ticket").innerText = ticket || "";
-
-/* generate QR */
-/* QR generation */
-
-new QRCode(document.getElementById("qrcode"),{
-text: ticket,
-width:150,
-height:150
-});
-
+    /* QR generation */
+    const qrData = ticket || "INVALID_TICKET";
+    
+    new QRCode(document.getElementById("qrcode"), {
+        text: qrData,
+        width: 160,
+        height: 160,
+        colorDark : "#000000",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+    });
 </script>
-
-</body>
-</html>
+</body></html>
