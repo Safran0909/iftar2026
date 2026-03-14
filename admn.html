@@ -29,8 +29,6 @@ text-align:center;
 margin-bottom:20px;
 }
 
-/* Stats */
-
 .stats{
 display:flex;
 justify-content:center;
@@ -57,8 +55,6 @@ font-size:12px;
 color:#bbb;
 }
 
-/* Search */
-
 .search{
 max-width:450px;
 margin:auto;
@@ -74,8 +70,6 @@ font-size:15px;
 box-sizing:border-box;
 }
 
-/* Sort */
-
 .sort{
 text-align:center;
 margin-bottom:15px;
@@ -90,27 +84,10 @@ margin:4px;
 font-size:14px;
 }
 
-.asc{
-background:#28a745;
-color:white;
-}
-
-.desc{
-background:#007bff;
-color:white;
-}
-
-.checkedbtn{
-background:#20c997;
-color:white;
-}
-
-.notcheckedbtn{
-background:#ffc107;
-color:black;
-}
-
-/* Table */
+.asc{ background:#28a745; color:white; }
+.desc{ background:#007bff; color:white; }
+.checkedbtn{ background:#20c997; color:white; }
+.notcheckedbtn{ background:#ffc107; color:black; }
 
 .table-container{
 overflow-x:auto;
@@ -144,8 +121,6 @@ font-weight:bold;
 color:#ffc107;
 font-weight:bold;
 }
-
-/* Mobile */
 
 @media (max-width:600px){
 th,td{
@@ -220,7 +195,7 @@ document.getElementById("checked").innerText=data.checked;
 document.getElementById("remaining").innerText=data.remaining;
 }
 
-/* Load attendees */
+/* Load attendees ONLY once */
 
 async function loadAttendees(){
 const res=await fetch("/attendees");
@@ -230,7 +205,7 @@ attendees.sort((a,b)=>a.id-b.id);
 renderTable(attendees);
 }
 
-/* Render */
+/* Render table */
 
 function renderTable(data){
 const table=document.getElementById("list");
@@ -252,7 +227,6 @@ table.innerHTML+=`
 <td>${status}</td>
 </tr>
 `;
-
 });
 }
 
@@ -271,21 +245,17 @@ p.ticket_code.toLowerCase().includes(q)
 renderTable(filtered);
 });
 
-/* Sort oldest */
+/* Sorting */
 
 function sortAsc(){
 attendees.sort((a,b)=>a.id-b.id);
 renderTable(attendees);
 }
 
-/* Sort newest */
-
 function sortDesc(){
 attendees.sort((a,b)=>b.id-a.id);
 renderTable(attendees);
 }
-
-/* Sort checked first */
 
 function sortChecked(){
 attendees.sort((a,b)=>{
@@ -295,8 +265,6 @@ return a.checked_in ? -1 : 1;
 renderTable(attendees);
 }
 
-/* Sort not checked first */
-
 function sortNotChecked(){
 attendees.sort((a,b)=>{
 if(a.checked_in===b.checked_in) return 0;
@@ -305,15 +273,14 @@ return a.checked_in ? 1 : -1;
 renderTable(attendees);
 }
 
-/* Refresh */
+/* Initial load */
 
-function refresh(){
 loadStats();
 loadAttendees();
-}
 
-refresh();
-setInterval(refresh,5000);
+/* Only stats live refresh */
+
+setInterval(loadStats,5000);
 
 </script>
 
